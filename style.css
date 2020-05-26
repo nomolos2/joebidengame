@@ -1,0 +1,65 @@
+#joe{
+  position: absolute;
+  left:10px;
+  top:10px;
+  
+}
+.heart{
+  top:0px;
+  position: absolute;
+  width:50px;
+}
+#heart1{
+  right:0px;
+}
+#heart2{
+  right:55px;
+}#heart3{
+  right:110px;
+}
+.character{
+  width:100px;
+  height:60px;
+}
+
+#swallwell{
+  position: absolute;
+  top:10px;
+  left:10px;
+}
+#inslee{
+  position: absolute;
+  top:10px;
+  left:10px;
+}
+#hickenlooper{
+  position: absolute;
+  top:10px;
+  left:10px;
+}
+#gillibrand{
+  position: absolute;
+  top:10px;
+  left:10px;
+}
+.levelOne{
+
+  display:none;
+}
+.headtext{
+    left:40%;
+    position: relative;
+    width:500px;
+}
+#startstop{
+  position:absolute;
+  top:0px;
+  font-size:20px;
+}
+#score{
+  left:100px;
+  top: 0px;
+  position: absolute;
+  font-size:25px;
+  margin-top:5px;
+}
