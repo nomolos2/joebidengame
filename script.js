@@ -6,6 +6,59 @@ pauser = document.querySelector("#startstop")
 let lives=4
 let joe = document.querySelector("#joe");
 
+
+class Thing {
+  constructor(...props) {
+    this.space = props.space
+    this.id = props.id
+    this.src = props.src
+    this.width = props.width
+    this.height = props.height
+    this.w = this.width / 2
+    this.h = this.height / 2
+    this.xSpeed = props.xSpeed
+    this.ySpeed = props.ySpeed
+    this.x = props.x
+    this.y = props.y
+    this.shootableThing = props.shootableThing || []
+  }
+  render() {
+
+  }
+  move() {
+    this.x += this.xSpeed
+    this.y += this.ySpeed
+  }
+  disappear() {
+
+  }
+
+}
+class Candidate extends Thing {
+  constructor(...props) {
+    super(props)
+  }
+  shoot() {
+    this.space.newThing(this.shootableThing)
+  }
+}
+class Space {
+  constructor(...props) {
+    this.things = props.things || []
+
+    setInterval(this.advanceTime, 50)
+  }
+  newThing(thing) {
+    this.things.push(thing)
+  }
+  advanceTime() {
+    this.things.forEach(t => t.move())
+  }
+  endOfTime() {
+    this.things.forEach(t => t.disappear())
+  }
+}
+
 cands = ['swallwell','hickenlooper','inslee','gillibrand']
 models = [
   {"x":200,"y":20,"xEnd":300,"yEnd":80},
