@@ -5,21 +5,25 @@
     <meta name="viewport" content="width=device-width">
     <title>repl.it</title>
     <link href="style.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
+    <script src="MooTools-Core-1.6.0.js"></script>
+    <script src="script.js"></script>
   </head>
-  <body>
+  <body onload="init()">
     <h1 class="headtext">Primary Game</h1>
     <p class="headtext">In this game, you control Joe Biden on his path toward the Democratic Nomination. You must use the arrow keys to dodge all obstacles. You are rather frail and only have three lives. </p>
     <button id="startstop" onclick="characterMove()">Start</button>
     <img id="heart1" class="heart" src="heart.webp"></img>
     <img id="heart2" class="heart" src="heart.webp"></img>
     <img id="heart3" class="heart" src="heart.webp"></img>
-    <p id="score"> Score:0<p>
+    <p id="score"> Score:0</p>
+    <!--
     <img class="character levelOne" id="joe" src="joeBiden.jpeg"></img>
     <img class="character levelOne" id="inslee" src="inslee.jpg"></img>
     <img class="character levelOne" id="swallwell" src="swallwell.jpeg"></img>
     <img class="character levelOne" id="gillibrand" src="gillibrand.jpeg"></img>
     <img class="character levelOne" id="hickenlooper" src="hickenlooper.jpeg"></img>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
-<script src="script.js"></script>
+    -->
+    <div id='ediv'>i'm an existing div</div>
   </body>
 </html>
