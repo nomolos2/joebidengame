@@ -1,15 +1,26 @@
 
 function init() {
-  window.addEvent('domready', function() {
+  let objDic = {}
+  /*window.addEvent('domready', function() {
     let jb = new Element('img', {
       src: 'joeBiden.jpeg',
       id: 'jb'
-    })
-    jb.inject(document.body)
+    })*/
+    
+    let joe = {"person":"jb",src:"joeBiden.jpeg"}
+    createEl(joe,objDic)
+    /*objDic["jb"] = new Element('img', {
+      src: 'joeBiden.jpeg',
+      id: 'jb'})
+    objDic["jb"].inject(document.body)*/
     console.log(jb)
     console.log($$('#ediv'))
-  });
-
+  };
+function createEl(personDic,place){
+  place[personDic["person"]] = new Element('img',{
+    src: personDic["src"],
+    id:personDic["person"]})
+    place[personDic["person"]].inject(document.body)
 }
 /*
 let kamala = []
