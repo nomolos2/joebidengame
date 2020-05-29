@@ -1,26 +1,83 @@
 
 function init() {
+ 
+  conf = getConfig()
+  let s1 = new Space()
+  let joe = new Thing({...conf.player, space: s1})
+
   let objDic = {}
-  /*window.addEvent('domready', function() {
-    let jb = new Element('img', {
-      src: 'joeBiden.jpeg',
-      id: 'jb'
-    })*/
-    
-    let joe = {"person":"jb",src:"joeBiden.jpeg"}
-    createEl(joe,objDic)
-    /*objDic["jb"] = new Element('img', {
-      src: 'joeBiden.jpeg',
-      id: 'jb'})
-    objDic["jb"].inject(document.body)*/
-    console.log(jb)
-    console.log($$('#ediv'))
-  };
-function createEl(personDic,place){
-  place[personDic["person"]] = new Element('img',{
-    src: personDic["src"],
-    id:personDic["person"]})
-    place[personDic["person"]].inject(document.body)
+}
+class Space {
+  constructor() {
+    this.things = []
+    this.width = window.innerWidth
+    this.height = window.innerHeight
+    this.w = this.width / 2
+    this.h = this.height / 2
+    setInterval(this.advanceTime.bind(this), 50)
+  }
+  injectThing(thing) {
+    this.things.push(thing)
+    let el = new Element('img',{
+      src: thing.src,
+      id: thing.id,
+    })
+    el.inject(document.body)
+    this.renderThing(thing)
+    return el
+  }
+  advanceTime() {
+    this.things
+      .filter(t => t.move())
+      .map(t => this.renderThing(t))
+    //this.checkForCollisions()
+  }
+  renderThing(thing) {
+    thing.el.style.left = thing.pos.x + this.w
+    thing.el.style.top =  thing.pos.y + this.h
+  }
+  endOfTime() {
+    this.things.forEach(t => t.disappear())
+  }
+  checkForCollisions() {
+    let colliders = this.things.filter()
+  }
+}
+class Thing {
+  constructor(props) {
+    this.space = props.space
+    this.id = props.id
+    this.src = props.src
+    this.pos = {...props.start}
+    this.size = {...props.size}
+    this.w = this.size.width / 2
+    this.h = this.size.height / 2
+    this.speed = {...props.speed}
+    this.shootableThing = props.shootableThing || []
+    this.el = this.space.injectThing(this)
+  }
+  render() {
+
+  }
+  move() {  // returns boolean of whether it moved or not
+    if (this.speed.x == 0 && this.speed.y == 0) {
+      return false
+    }
+    this.pos.x += this.speed.x
+    this.pos.y += this.speed.y
+    return true
+  }
+  disappear() {
+
+  }
+}
+class Candidate extends Thing {
+  constructor(...props) {
+    super(props)
+  }
+  shoot() {
+    this.space.newThing(this.shootableThing)
+  }
 }
 /*
 let kamala = []
@@ -111,80 +168,11 @@ let swallDir = 1
 let hicDir = 2
 let insleeDir = 3
 let gilliDir = 3 
-let directions = {
-  "39": d => {
-    d.x +=2
-    d.xEnd +=2 }, 
-  "37" : d => {
-    d.x -=2
-    d.xEnd -=2}, 
-  "40": d => {
-    d.y+=2, 
-    d.yEnd +=2 },
-   "38" :d => {
-    d.y -=2
-    d.yEnd -=2}  }
 levels = [enemyDic,kamala]
 level = 0
 onkeydown = evt => act(evt.keyCode,joeM)
 */
 
-
-class Thing {
-  constructor(...props) {
-    this.space = props.space
-    this.id = props.id
-    this.src = props.src
-    this.width = props.width
-    this.height = props.height
-    this.w = this.width / 2
-    this.h = this.height / 2
-    this.xSpeed = props.xSpeed
-    this.ySpeed = props.ySpeed
-    this.x = props.x
-    this.y = props.y
-    this.shootableThing = props.shootableThing || []
-  }
-  render() {
-
-  }
-  move() {
-    this.x += this.xSpeed
-    this.y += this.ySpeed
-  }
-  disappear() {
-
-  }
-
-}
-class Candidate extends Thing {
-  constructor(...props) {
-    super(props)
-  }
-  shoot() {
-    this.space.newThing(this.shootableThing)
-  }
-}
-class Space {
-  constructor(...props) {
-    this.things = props.things || []
-
-    setInterval(this.advanceTime, 50)
-  }
-  newThing(thing) {
-    this.things.push(thing)
-  }
-  advanceTime() {
-    this.things.forEach(t => t.move())
-    this.checkForCollisions()
-  }
-  endOfTime() {
-    this.things.forEach(t => t.disappear())
-  }
-  checkForCollisions() {
-    let colliders = this.things.filter()
-  }
-}
 
 function continuous(kc,d){
   if (joeM["x"] <= 0){
@@ -294,3 +282,57 @@ function act(cd){
   bernie.style.top=duckM["y"]+"px"
   
 }*/
+
+
+function getConfig() {
+  const player = {
+    name: "Joe Biden",
+    id: "joe",
+    start: { x: - window.innerWidth / 2, y: 0, },
+    src: "joeBiden.jpeg",
+    size: { width: 100, height: 60, },
+    speed: {x: 0, y: 0},
+  }
+
+  const candidates = {
+    swallwell: {
+      name: "Eric Swallwell",
+      src: "swallwell.jpeg",
+      level: 1,
+      start: { x:250, y:50, },
+      size: { width: 100, height: 60, },
+      speed: {x: -1, y: 0},
+    },
+    hickenlooper: {
+      name: "John Hickenlooper",
+      src: "hickenlooper.jpeg",
+      level: 1,
+      start: { x:550, y:50, },
+      size: { width: 100, height: 60, },
+      speed: {x: -2, y: 0},
+    },
+    inslee: {
+      name: "Jay Inslee",
+      src: "inslee.jpg",
+      level: 1,
+      start: { x:850, y:50, },
+      size: { width: 100, height: 60, },
+      speed: {x: -3, y: 0},
+    },
+    gillibrand: {
+      name: "Kirsten Gillibrand",
+      src: "gillibrand.jpeg",
+      level: 1,
+      start: { x:1150, y:50, },
+      size: { width: 100, height: 60, },
+      speed: {x: -4, y: 0},
+    },
+  }
+  const directions = {
+    "39": {x:  1, y:  0},
+    "37": {x: -1, y:  0},
+    "40": {x:  0, y:  1},
+    "38": {x:  0, y: -1},
+  }
+  return {player, candidates, directions}
+}
