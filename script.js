@@ -165,9 +165,13 @@ class Space {
   }
   advanceTime() {
     this.things.forEach(t => t.move())
+    this.checkForCollisions()
   }
   endOfTime() {
     this.things.forEach(t => t.disappear())
+  }
+  checkForCollisions() {
+    let colliders = this.things.filter()
   }
 }
 
