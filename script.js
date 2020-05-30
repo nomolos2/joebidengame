@@ -4,8 +4,10 @@ function init() {
   conf = getConfig()
   let s1 = new Space()
   let joe = new Thing({...conf.player, space: s1})
-
-  let objDic = {}
+  document.onkeydown= evt => {
+    let speed = conf.directions[evt.keyCode] || joe.speed
+    joe.changeSpeed(speed)
+  }
 }
 class Space {
   constructor() {
@@ -23,8 +25,8 @@ class Space {
       id: thing.id,
     })
     el.inject(document.body)
+    thing.el = el
     this.renderThing(thing)
-    return el
   }
   advanceTime() {
     this.things
@@ -33,8 +35,8 @@ class Space {
     //this.checkForCollisions()
   }
   renderThing(thing) {
-    thing.el.style.left = thing.pos.x + this.w
-    thing.el.style.top =  thing.pos.y + this.h
+    thing.el.style.left = (thing.pos.x + this.w) + 'px'
+    thing.el.style.top  = (thing.pos.y + this.h) + 'px'
   }
   endOfTime() {
     this.things.forEach(t => t.disappear())
@@ -54,7 +56,7 @@ class Thing {
     this.h = this.size.height / 2
     this.speed = {...props.speed}
     this.shootableThing = props.shootableThing || []
-    this.el = this.space.injectThing(this)
+    this.space.injectThing(this)
   }
   render() {
 
@@ -66,6 +68,9 @@ class Thing {
     this.pos.x += this.speed.x
     this.pos.y += this.speed.y
     return true
+  }
+  changeSpeed(speed) {
+    this.speed = speed
   }
   disappear() {
 
