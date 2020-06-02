@@ -17,8 +17,9 @@ function makeScaleConvert(d0,d1,r0,r1){
 }
 function beginOne(){
   
-  conf = getConfig()
   let s1 = new Space()
+  window.s1 = s1
+  conf = getConfig(s1.xScale, s1.yScale)
   let joe = new Politician({...conf.player, space: s1})
   let firstEnemies = conf.candidates
   firstD = {}
@@ -54,14 +55,20 @@ function beginOne(){
 class Space {
   constructor() {
     this.things = []
+    this.interval = setInterval(this.advanceTime.bind(this), 50)
+    this.w = 500
+    this.h = 250
+    this.setWindowDims()
+
+    window.onresize = () => {
+      this.setWindowDims()
+    }
+  }
+  setWindowDims() {
     this.width = window.innerWidth
     this.height = window.innerHeight
-    this.w = this.width / 2
-    this.h = this.height / 2
-    this.interval = setInterval(this.advanceTime.bind(this), 50)
     this.xScale = makeScaleConvert(-this.w, this.w, 0, this.width)
     this.yScale = makeScaleConvert(-this.h, this.h, this.height, 0)
-
   }
   injectThing(thing) {
     this.things.push(thing)
@@ -85,15 +92,11 @@ class Space {
   }
   heightBounce(thing){
     if (Math.abs(thing.hFromCenter)>=this.h){
+      if ("gillibrand" == thing.id){
+        console.log(thing.hFromCenter)
+      }
       thing.changeSpeed({x:0,y:-thing.speed.y})
-      
     }
-    if ("swallwell" == thing.id){
-      console.log(thing.hFromCenter)
-    }
-
-    
-    
   }
   
   checkAndDealWithWalllHit(thing) {
@@ -101,8 +104,8 @@ class Space {
     return(thing)
 }
   renderThing(thing) {
-    thing.el.style.left = this.xScale(thing.pos.x) + 'px'
-    thing.el.style.top  = this.yScale(thing.pos.y+thing.h) + 'px'
+    thing.el.style.left = this.xScale(thing.pos.x - thing.w) + 'px'
+    thing.el.style.top  = this.yScale(thing.pos.y + thing.h) + 'px'
   }
   edgePos(thing, whichEdge) {
     if (whichEdge === 't') return thing.pos.y - thing.h
@@ -412,13 +415,19 @@ function act(cd){
 }*/
 
 
-function getConfig() {
+function getConfig(xScale, yScale) {
+  //imgHeight = yScale(60)
+  //imgWidth = xScale(100)
+
+  imgHeight = 60
+  imgWidth = 100
+
   const player = {
     name: "Joe Biden",
     id: "joe",
     start: { x: - window.innerWidth / 2, y: 0, },
     src: "joeBiden.jpeg",
-    size: { width: 100, height: 60, },
+    size: { width: imgWidth, height: imgHeight},
     speed: {x: 0, y: 0},
     classes: 'character',
   }
@@ -430,7 +439,7 @@ function getConfig() {
       src: "swallwell.jpeg",
       level: 1,
       start: { x:-450, y:50, },
-      size: { width: 100, height: 60, },
+      size: { width: imgWidth, height: imgHeight},
       speed: {x: 0, y: -1},
       classes: 'character',
     },
@@ -440,7 +449,7 @@ function getConfig() {
       src: "hickenlooper.jpeg",
       level: 1,
       start: { x:-200, y:0, },
-      size: { width: 100, height: 60, },
+      size: { width: imgWidth, height: imgHeight},
       speed: {x: 0, y: -2},
       classes: 'character',
     },
@@ -450,7 +459,7 @@ function getConfig() {
       src: "inslee.jpg",
       level: 1,
       start: { x:50, y:0, },
-      size: { width: 100, height: 60, },
+      size: { width: imgWidth, height: imgHeight},
       speed: {x: 0, y: -3},
       classes: 'character',
     },
@@ -460,7 +469,7 @@ function getConfig() {
       src: "gillibrand.jpeg",
       level: 1,
       start: { x:300, y:0, },
-      size: { width: 100, height: 60, },
+      size: { width: imgWidth, height: imgHeight},
       speed: {x: 0, y: -4},
       classes: 'character',
     },
