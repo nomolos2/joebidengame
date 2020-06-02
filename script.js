@@ -19,7 +19,7 @@ function beginOne(){
   
   let s1 = new Space()
   window.s1 = s1
-  conf = getConfig(s1.xScale, s1.yScale)
+  conf = getConfig(s1)
   let joe = new Politician({...conf.player, space: s1})
   let firstEnemies = conf.candidates
   firstD = {}
@@ -56,8 +56,6 @@ class Space {
   constructor() {
     this.things = []
     this.interval = setInterval(this.advanceTime.bind(this), 50)
-    this.w = 500
-    this.h = 250
     this.setWindowDims()
 
     window.onresize = () => {
@@ -67,6 +65,10 @@ class Space {
   setWindowDims() {
     this.width = window.innerWidth
     this.height = window.innerHeight
+    this.w = 500
+    this.h = 250
+    //this.w = this.width / 2
+    //this.h = this.height / 2 
     this.xScale = makeScaleConvert(-this.w, this.w, 0, this.width)
     this.yScale = makeScaleConvert(-this.h, this.h, this.height, 0)
   }
@@ -91,9 +93,17 @@ class Space {
     //this.checkForCollisions()
   }
   heightBounce(thing){
+    /*
     if (Math.abs(thing.hFromCenter)>=this.h){
       if ("gillibrand" == thing.id){
         console.log(thing.hFromCenter)
+      }
+      thing.changeSpeed({x:0,y:-thing.speed.y})
+    }
+    */
+    if (Math.abs(thing.pos.y) >= this.h) {
+      if ("gillibrand" == thing.id){
+        console.log(thing.pos.y, thing.el.style.top)
       }
       thing.changeSpeed({x:0,y:-thing.speed.y})
     }
@@ -117,16 +127,6 @@ class Space {
     
   }
   
-
-
-
-  /*
-  d3xScale() {
-    return d3.linearScale().domain([-this.w, this.w]).range([0, this.width])
-  }
-  d3yScale() {
-    return d3.linearScale().domain([-this.h, this.h]).range([this.height, 0])
-  }*/
   endOfTime() {
     this.things.forEach(t => t.disappear())
   }
@@ -210,212 +210,8 @@ class Candidate extends Politician {
     this.space.newThing(this.shootableThing)
   }
 }
-/*
-let kamala = []
-let score = document.querySelector("#score")
-let bankScore=0;
-let newScore = 0;
-pauser = document.querySelector("#startstop")
-let lives=4
-let  = document.querySelector("#joe");
 
-
-cands = ['swallwell','hickenlooper','inslee','gillibrand']
-models = [
-  {"x":200,"y":20,"xEnd":300,"yEnd":80},
-  {"x":500,"y":20,"xEnd":600,"yEnd":80},
-  {"x":800,"y":20,"xEnd":900,"yEnd":80},
-  {"x":1100,"y":20,"xEnd":1200,"yEnd":80}
-]
-let enemyList = models.map((m,i) => {
-  o = {
-    model: m,
-    speed: i+1,
-    id: cands[i],
-    intervalId: null,
-    el: document.querySelector('#' + cands[i]),
-  }
-  return(o)
-})
-let enemyDic = _.keyBy(enemyList, "id")
-
-
-console.log(_.map(enemyDic, (o,id)=>`${id}: ${o.speed}`))
-
-let swallwellM = {
-  "x":150,
-  "y":20,
-  "xEnd":250,
-  "yEnd":80
-}
-let hickenlooperM = {
-  "x":400,
-  "y":20,
-  "xEnd":500,
-  "yEnd":80
-}
-let insleeM = {
-  "x":650,
-  "y":20,
-  "xEnd":750,
-  "yEnd":80
-}
-let gillibrandM = {
-  "x":900,
-  "y":20,
-  "xEnd":1000,
-  "yEnd":80
-}
-var swallMove;
-var hicMove;
-var insMove;
-var gilliMove;
-
-let swallDic = {"id":document.querySelector("#swallwell"),"model": swallwellM, "speed": 1, "repeat":swallMove}
-let hickenDic = { "id":document.querySelector("#hickenlooper"),"model": hickenlooperM, "speed": 2, "repeat":hicMove}
-let insleeDic = {"id":document.querySelector("#inslee"),"model": insleeM, "speed": 3, "repeat":insMove}
-let gilliDic = {"id":document.querySelector("#gillibrand"),"model": gillibrandM, "speed": 4, "repeat":gilliMove}
-let enemiesOne = [swallDic,hickenDic,insleeDic,gilliDic]
-/*
-enemiesOne.forEach(d=>{
-                      d.id.style.top="20px"
-                      d.id.style.left = d.model.x+"px"})* /
-_.forEach(enemyDic,(o,id)=>
-                  {o.el.style.top="20px"
-                  o.el.style.left=o.model.x+"px"})
-joe.style.left="0px"
-joe.style.top = "50%"
-let joeM = {
-  "x":10,
-  "y":(window.innerHeight/2)-30,
-  "xEnd":110,
-  "yEnd":(window.innerHeight/2)+30
-}
-let scrWidth = window.innerWidth-100
-let scrHeight = window.innerHeight-60
-
-
-let swallDir = 1
-let hicDir = 2
-let insleeDir = 3
-let gilliDir = 3 
-levels = [enemyDic,kamala]
-level = 0
-onkeydown = evt => act(evt.keyCode,joeM)
-*/
-
-
-function continuous(kc,d){
-  if (joeM["x"] <= 0){
-    clearInterval(moveTime)
-  }
-  if (joeM["y"] <= 0){
-    clearInterval(moveTime)
-  }
-  if (joeM["x"] >= scrWidth){
-    
-    bankScore = newScore
-    joeM["x"]=0
-    //_.forEach(enemyDic,(o)=>o.el.style.display="none")
-    _.forEach(enemyDic,d=>clearInterval(d.intervalId))
-    level++
-
-  }
-  if (joeM["y"] >=  scrHeight){
-    clearInterval(moveTime)
-  }
-  
-  if ((pauser.innerHTML !== "Unpause") && (typeof directions[kc] !== 'undefined')){
-    directions[kc](d)
-    joe.style.left=joeM["x"]+"px"
-    joe.style.top=joeM["y"]+"px"}
-    newScore = joeM["x"]
-    score.innerHTML = `Score: ${newScore+bankScore}`
-    
-  
-}
-function act(kc,d){
-
-  if (typeof moveTime !== 'undefined'){
-    clearInterval(moveTime)}
- 
-  moveTime = window.setInterval(continuous,10,kc,d)
- 
-}
-/*function candidateMove(canDic){
-  canDic["id"].style.top = "20px"
-  if ((canDic["model"]["y"] <=0) || (canDic["model"]["y"] >= scrHeight)){
-    canDic["speed"] *= -1
-  }
-  overlapCheck(canDic["model"],canDic["repeat"])
-  canDic["model"]["y"] += canDic["speed"]
-  canDic["model"]["yEnd"] += canDic["speed"]
-  canDic["id"].style.top = canDic["model"]["y"]+"px"
-}
-function candidateMove(canDic){
-  canDic["el"].style.top = "20px"
-  if ((canDic["model"]["y"] <=0) || (canDic["model"]["y"] >= scrHeight)){
-    canDic["speed"] *= -1
-  }
-  overlapCheck(canDic["model"],canDic["intervalId"])
-  canDic["model"]["y"] += canDic["speed"]
-  canDic["model"]["yEnd"] += canDic["speed"]
-  canDic["el"].style.top = canDic["model"]["y"]+"px"}
-function characterMove(){
-  text = document.querySelectorAll(".headtext")
-  levelOne = document.querySelectorAll(".levelOne")
-  text.forEach(d => d.style.display="none")
-  levelOne.forEach(d => d.style.display="block")
-  if (pauser.innerHTML == "Start" || pauser.innerHTML == "Unpause"){
-    //enemiesOne.forEach(d=>d.repeat = window.setInterval(candidateMove,10,d))
-    _.map(levels[level], (o,id)=>o.intervalId=setInterval(candidateMove,10,o))
-    pauser.innerHTML = "Pause"
-  }  else {
-    _.forEach(enemyDic,d=>clearInterval(d.intervalId))
-    pauser.innerHTML="Unpause"
-  }
-}
-function overlapCheck(personDic,person){
-  if( joeM["x"] > personDic["xEnd"]) return(false)
-  if( personDic["x"] > joeM["xEnd"]) return(false)
-  if( joeM["y"] > personDic["yEnd"]) return(false)
-  if( personDic["y"] > joeM["yEnd"]) return(false)
-  
-  clearInterval(person)
-  clearInterval(moveTime)
-  lives -=1
-  if (lives == 1){
-    alert("Game Over")
-  }
-  let heartGone = document.querySelector(`#heart${lives}`)
-  heartGone.style.display = "none"
-  }
-
-/*
-let duckM = {
-  "x":200,
-  "y":10
-}
-let directions = {"39": d => duckM["x"]+=10, 
-  "37" : d => duckM["x"]-=10, 
-  "40": d => duckM["y"]+=10, 
-   "38" :d => duckM["y"] -=10 }
-
-function onLoad(){
-    bernie.style.left="200px"
-    bernie.style.top = "10px"
-    document.onkeydown= evt => act(evt.keyCode)
-}
-function act(cd){
-  //directions[event.keyCode][0]=directions[event.keyCode]
-  directions[cd] 
-  bernie.style.left=duckM["x"]+"px"
-  bernie.style.top=duckM["y"]+"px"
-  
-}*/
-
-
-function getConfig(xScale, yScale) {
+function getConfig(space) {
   //imgHeight = yScale(60)
   //imgWidth = xScale(100)
 
@@ -425,7 +221,7 @@ function getConfig(xScale, yScale) {
   const player = {
     name: "Joe Biden",
     id: "joe",
-    start: { x: - window.innerWidth / 2, y: 0, },
+    start: { x: - -space.w + imgWidth / 2, y: 0, },
     src: "joeBiden.jpeg",
     size: { width: imgWidth, height: imgHeight},
     speed: {x: 0, y: 0},
