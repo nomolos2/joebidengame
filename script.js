@@ -20,12 +20,12 @@ function beginOne(){
   let s1 = new Space()
   window.s1 = s1
   conf = getConfig(s1)
-  let joe = new Politician({...conf.player, space: s1})
+  let joe = new Joe({...conf.player, space: s1})
   let firstEnemies = conf.candidates
   firstD = {}
-  _.forEach(firstEnemies,d=>  firstD[d.name] = new Candidate({...d, space : s1}))
+  _.forEach(firstEnemies,d=>  firstD[d.name] = new Candidate({...d, space : s1})) 
 
-  console.log(firstD)
+
   document.onkeydown= evt => {
     let speed = conf.directions[evt.keyCode] || joe.speed
     joe.changeSpeed(speed)
@@ -65,10 +65,10 @@ class Space {
   setWindowDims() {
     this.width = window.innerWidth
     this.height = window.innerHeight
-    this.w = 500
-    this.h = 250
-    //this.w = this.width / 2
-    //this.h = this.height / 2 
+    //this.w = 500
+    //this.h = 250
+    this.w = this.width / 2
+    this.h = this.height / 2 
     this.xScale = makeScaleConvert(-this.w, this.w, 0, this.width)
     this.yScale = makeScaleConvert(-this.h, this.h, this.height, 0)
   }
@@ -93,24 +93,22 @@ class Space {
     //this.checkForCollisions()
   }
   heightBounce(thing){
-    /*
-    if (Math.abs(thing.hFromCenter)>=this.h){
-      if ("gillibrand" == thing.id){
-        console.log(thing.hFromCenter)
-      }
-      thing.changeSpeed({x:0,y:-thing.speed.y})
+    if (Math.abs(thing.hFromCenter) >= this.h) {
+      
+      thing.changeSpeed({x:thing.speed.x,y:-thing.speed.y})
     }
-    */
-    if (Math.abs(thing.pos.y) >= this.h) {
-      if ("gillibrand" == thing.id){
-        console.log(thing.pos.y, thing.el.style.top)
-      }
-      thing.changeSpeed({x:0,y:-thing.speed.y})
-    }
+    
+  }
+  hitLeft(thing){
+    if(thing.pos.x-thing.w<=-this.w){
+      thing.changeSpeed({x:-thing.speed.x,y:thing.speed.y})
+    }  
+
   }
   
   checkAndDealWithWalllHit(thing) {
     this.heightBounce(thing)
+    this.hitLeft(thing)
     return(thing)
 }
   renderThing(thing) {
@@ -136,11 +134,13 @@ class Space {
 
   }
   iCollided(thing,colliders){
-    colliders.slice(colliders.indexOf(thing)+1,).forEach(d => this.weCollided(thing,d))
+    let newColl = colliders.slice(colliders.indexOf(thing)+1)
+    //console.log(newColl.length)
+    newColl.forEach(d => this.weCollided(thing,d))
   
   }
   weCollided(thing,oThing){
-    
+    /*
     if (Math.abs(thing.pos.x-oThing.pos.x)>(thing.w+oThing.w)){
       return(false)
 
@@ -148,10 +148,19 @@ class Space {
     if (Math.abs(thing.pos.y-oThing.pos.y)>(thing.h)){
       return(false)
 
-    }
-    thing.collide(oThing)
-    oThing.collide(thing)
+    }*/
+  if( (thing.pos.x-thing.w) > (oThing.pos.x+oThing.w)) return(false)
+  if((oThing.pos.x-oThing.w) > (thing.pos.x+thing.w)) return(false)
+  if( (thing.pos.y-thing.h) > (oThing.pos.y+oThing.h)) return(false)
+  if((oThing.pos.y-oThing.h) > (thing.pos.y+thing.h)) return(false)
 
+  
+  //clearInterval(person)
+  //clearInterval(moveTime)
+  thing.switch(oThing)
+  oThing.switch(thing)
+  thing.hold()
+  oThing.hold()
   }
 }
 
@@ -167,8 +176,14 @@ class Thing {
     this.speed = {...props.speed}
     this.shootableThing = props.shootableThing || []
     this.classes = props.classes
+    this.tempSpeed = {
+     x:0,
+     y:0,
+
+    }
     this.space.injectThing(this)
     this.hFromCenter = (Math.abs(this.pos.y)+this.h)*((this.pos.y)/Math.abs(this.pos.y))
+  
   }
  
   
@@ -193,21 +208,42 @@ class Thing {
 
   }
 }
+
 class Politician extends Thing {
   constructor(props) {
     super(props)
+    this.heart = 1
   }
-  collide(oThing){
-    this.speed.x = oThing.speed.x
-    this.speed.y = oThing.speed.y
+  switch(oThing){
+    this.tempSpeed.x = oThing.speed.x
+    this.tempSpeed.y = oThing.speed.y
+    this.specialCollide()
+  }
+  hold(){
+    this.speed.x=this.tempSpeed.x
+    this.speed.y = this.tempSpeed.y
   }
 }
+  
 class Candidate extends Politician {
+  
   constructor(props) {
     super(props)
   }
+  
   shoot() {
     this.space.newThing(this.shootableThing)
+  }
+  specialCollide(){
+    console.log(1)
+  }
+}
+class Joe extends Politician{
+  constructor(props) {
+    super(props)
+  }
+  specialCollide(){
+    document.querySelector(`#heart${this.heart}`).style.display="none"
   }
 }
 
@@ -221,7 +257,7 @@ function getConfig(space) {
   const player = {
     name: "Joe Biden",
     id: "joe",
-    start: { x: - -space.w + imgWidth / 2, y: 0, },
+    start: { x: -space.w + imgWidth / 2, y: 0, },
     src: "joeBiden.jpeg",
     size: { width: imgWidth, height: imgHeight},
     speed: {x: 0, y: 0},
@@ -234,7 +270,7 @@ function getConfig(space) {
       id:"swallwell",
       src: "swallwell.jpeg",
       level: 1,
-      start: { x:-450, y:50, },
+      start: { x:-3*space.w/5, y:50, },
       size: { width: imgWidth, height: imgHeight},
       speed: {x: 0, y: -1},
       classes: 'character',
@@ -244,7 +280,7 @@ function getConfig(space) {
       id:"hickenlooper",
       src: "hickenlooper.jpeg",
       level: 1,
-      start: { x:-200, y:0, },
+      start: { x:-space.w/5, y:0, },
       size: { width: imgWidth, height: imgHeight},
       speed: {x: 0, y: -2},
       classes: 'character',
@@ -254,7 +290,7 @@ function getConfig(space) {
       id:"inslee",
       src: "inslee.jpg",
       level: 1,
-      start: { x:50, y:0, },
+      start: { x:space.w/5, y:0, },
       size: { width: imgWidth, height: imgHeight},
       speed: {x: 0, y: -3},
       classes: 'character',
@@ -264,7 +300,7 @@ function getConfig(space) {
       id:"gillibrand",
       src: "gillibrand.jpeg",
       level: 1,
-      start: { x:300, y:0, },
+      start: { x:3*space.w/5, y:0, },
       size: { width: imgWidth, height: imgHeight},
       speed: {x: 0, y: -4},
       classes: 'character',
