@@ -1,5 +1,6 @@
 
 function init() {
+
   $$('#startstop').addEvent("click",beginOne)
 }
 
@@ -17,16 +18,24 @@ function makeScaleConvert(d0,d1,r0,r1){
 }
 function beginOne(){
   
-  let s1 = new Space()
-  window.s1 = s1
-  conf = getConfig(s1)
-  let joe = new Joe({...conf.player, space: s1})
-  let firstEnemies = conf.candidates
+
+  let sDic = {1:{"space":null,"level":1}}
+  
+  sDic[1].space = new Space({level:1})
+  conf = getConfig(sDic[1].space)
+  let joe = new Joe({...conf.player, space: sDic[1].space})
+  let firstEnemies = conf.candidates[sDic[1].level]
   firstD = {}
-  _.forEach(firstEnemies,d=>  firstD[d.name] = new Candidate({...d, space : s1})) 
+  _.forEach(firstEnemies,d=>  firstD[d.name] = new Candidate({...d, space : sDic[1].space})) 
 
 
   document.onkeydown= evt => {
+    conf.directions = {
+      "39": {x:  13, y:  0},
+      "37": {x: -13, y:  0},
+      "40": {x:  0, y:  -13},
+      "38": {x:  0, y: 13},
+    }
     let speed = conf.directions[evt.keyCode] || joe.speed
     joe.changeSpeed(speed)
   }
@@ -53,7 +62,8 @@ function beginOne(){
 
 
 class Space {
-  constructor() {
+  constructor(props) {
+    this.level = props.level
     this.things = []
     this.interval = setInterval(this.advanceTime.bind(this), 50)
     this.setWindowDims()
@@ -105,10 +115,16 @@ class Space {
     }  
 
   }
+  hitRight(thing){
+    if(thing.pos.x+thing.w>=this.w){
+      thing.rightHit(this)
+    }  
+  }
   
   checkAndDealWithWalllHit(thing) {
     this.heightBounce(thing)
     this.hitLeft(thing)
+    this.hitRight(thing)
     return(thing)
 }
   renderThing(thing) {
@@ -205,7 +221,7 @@ class Thing {
     this.speed = speed
   }
   disappear() {
-
+    this.el.destroy()
   }
 }
 
@@ -229,8 +245,11 @@ class Candidate extends Politician {
   
   constructor(props) {
     super(props)
+    
   }
-  
+  rightHit(space){
+    this.changeSpeed({x:-this.speed.x,y:this.speed.y})
+  }
   shoot() {
     this.space.newThing(this.shootableThing)
   }
@@ -241,6 +260,12 @@ class Candidate extends Politician {
 class Joe extends Politician{
   constructor(props) {
     super(props)
+    
+  }
+  rightHit(space){
+    this.pos.x = -space.w + 50
+    space.endOfTime()
+
   }
   specialCollide(){
     document.querySelector(`#heart${this.heart}`).style.display="none"
@@ -263,8 +288,8 @@ function getConfig(space) {
     speed: {x: 0, y: 0},
     classes: 'character',
   }
-
-  const candidates = {
+  const candidates={
+  1:{
     swallwell: {
       name: "Eric Swallwell",
       id:"swallwell",
@@ -305,12 +330,12 @@ function getConfig(space) {
       speed: {x: 0, y: -4},
       classes: 'character',
     },
-  }
+  },}
   const directions = {
-    "39": {x:  3, y:  0},
-    "37": {x: -3, y:  0},
-    "40": {x:  0, y:  -3},
-    "38": {x:  0, y: 3},
+    "39": {x:  13, y:  0},
+    "37": {x: -13, y:  0},
+    "40": {x:  0, y:  -13},
+    "38": {x:  0, y: 13},
   }
   return {player, candidates, directions}
 
