@@ -1,9 +1,4 @@
-#joe{
-  position: absolute;
-  left:10px;
-  top:10px;
-  
-}
+
 .heart{
   top:0px;
   position: absolute;
@@ -17,31 +12,12 @@
 }#heart3{
   right:110px;
 }
-.character{
+.thingy{
+  position: absolute;
   width:100px;
   height:60px;
 }
 
-#swallwell{
-  position: absolute;
-  top:10px;
-  left:10px;
-}
-#inslee{
-  position: absolute;
-  top:10px;
-  left:10px;
-}
-#hickenlooper{
-  position: absolute;
-  top:10px;
-  left:10px;
-}
-#gillibrand{
-  position: absolute;
-  top:10px;
-  left:10px;
-}
 .levelOne{
 
   display:none;

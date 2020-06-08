@@ -1,7 +1,7 @@
 
 function init() {
 
-  $$('#startstop').addEvent("click",beginOne)
+  $$('#startstop').addEvent("click",callMakeLevel)
 }
 
 function makeScaleConvert(d0,d1,r0,r1){
@@ -16,17 +16,31 @@ function makeScaleConvert(d0,d1,r0,r1){
     //return (d1-d0)/(r1-r0)*(dn)-(d0-r0)
   }
 }
-function beginOne(){
+function callMakeLevel(){
+  makeLevel()
+}
+function makeLevel(level = 1, hearts,bankScore = 0){
+  if (level == 4){
+    let el = new Element('p',{
+      text:`You Won The Primary.`,
+      fontsize:50})
+      
   
+    el.inject(document.body)
+    el.style.position = "absolute"
+    el.style.left= window.innerWidth/2+"px"
+    el.style.top =window.innerHeight/2 + "px"
 
-  let sDic = {1:{"space":null,"level":1}}
+    
+    return true
+  }
   
-  sDic[1].space = new Space({level:1})
-  conf = getConfig(sDic[1].space)
-  let joe = new Joe({...conf.player, space: sDic[1].space})
-  let firstEnemies = conf.candidates[sDic[1].level]
+  let space = new Space({level,hearts,bankScore})
+  let conf = getConfig(space)
+  let joe = new Joe({...conf.player, space})
+  let enemies = conf.candidates[level]
   firstD = {}
-  _.forEach(firstEnemies,d=>  firstD[d.name] = new Candidate({...d, space : sDic[1].space})) 
+  _.forEach(enemies,d=>  firstD[d.name] = new Candidate({...d, space})) 
 
 
   document.onkeydown= evt => {
@@ -40,21 +54,20 @@ function beginOne(){
     joe.changeSpeed(speed)
   }
   function unpauser(){
-    s1.interval = setInterval(s1.advanceTime.bind(s1), 50)
+    space.interval = setInterval(space.advanceTime.bind(space), 50)
     $$('#startstop').set("text","pause")
     $$('#startstop').removeEvent("click", unpauser);
     $$('#startstop').addEvent("click",pauser)
     
   }
-  function pauser(space) {
-    clearInterval(s1.interval)
+  function pauser() {
+    clearInterval(space.interval)
     $$('#startstop').set("text","unpause")
-
     $$('#startstop').removeEvent("click", pauser);
     $$('#startstop').addEvent("click",unpauser)
   }
   $("l0").setStyle('display', 'none')  
-  $$('#startstop').removeEvent("click", beginOne);
+  $$('#startstop').removeEvent("click", callMakeLevel);
   $$('#startstop').addEvent("click",pauser)
   $$('#startstop').set("text","pause")
 
@@ -64,13 +77,42 @@ function beginOne(){
 class Space {
   constructor(props) {
     this.level = props.level
+    this.hearts = props.heart || 3
     this.things = []
+    this.bankScore = props.bankScore
+    this.newScore = 0
+    
+    this.bullets = {}
     this.interval = setInterval(this.advanceTime.bind(this), 50)
+    this.intervals = [this.interval]
     this.setWindowDims()
 
     window.onresize = () => {
       this.setWindowDims()
     }
+  }
+  immunify(person,bullId,who){
+    if(person.id==who){
+      person.addImmunity(bullId)
+    }
+  }
+  addBullet(bulletType,originPos){
+    let bulletPos = _.clone(originPos)
+    let difX = (bulletPos.x-this.things[0].pos.x)
+    let difY = (bulletPos.y - this.things[0].pos.y)
+    let bulletSpeed = {x:-5,y:-5}
+    let bullNum = "bullet"+ (Object.keys(this.bullets).length+1)
+    let bulletDic= {...bulletType,pos:bulletPos,space:this,speed:bulletSpeed,id:bullNum}
+    this.things.forEach(d=>this.immunify(d,bullNum,bulletType.whose))
+
+    this.bullets[bullNum] = new Bullet(bulletDic)
+    this.bullets["bullet"+ (Object.keys(this.bullets).length)].addImmunity(bulletType.whose)
+    
+    //bullet.pos = bulletPos 
+    //this.bullets.push("bullet"+ (Object.keys(this.bullets).length+1))
+    //bullet.el = "bullet" + this.bullets.length
+    //this.injectThing(bullet.el)
+
   }
   setWindowDims() {
     this.width = window.innerWidth
@@ -87,6 +129,8 @@ class Space {
     let el = new Element('img',{
       src: thing.src,
       id: thing.id,
+      width: thing.size.width,
+      height: thing.size.height,
       "class": thing.classes,
     })
     el.inject(document.body)
@@ -99,24 +143,29 @@ class Space {
       .filter(t => t.move())
       .map(t => this.checkAndDealWithWalllHit(t))
       .map(t => this.renderThing(t))
-    
+    this.newScore= this.xScale(this.things[0].pos.x)
+    $$("#score").set("text", `Score: ${this.totalScore()}`)
     //this.checkForCollisions()
   }
+  totalScore(){
+    return(this.bankScore + this.newScore)
+  }
   heightBounce(thing){
-    if (Math.abs(thing.hFromCenter) >= this.h) {
+    if (Math.abs(thing.hFromCenter) >= this.h && thing.speed.y/thing.pos.y>0) {
       
-      thing.changeSpeed({x:thing.speed.x,y:-thing.speed.y})
+      thing.pos.y = -(thing.pos.y+10)     
     }
     
   }
   hitLeft(thing){
-    if(thing.pos.x-thing.w<=-this.w){
-      thing.changeSpeed({x:-thing.speed.x,y:thing.speed.y})
+    if(thing.pos.x-thing.w<=-this.w && thing.speed.x/thing.pos.x>0){
+      thing.passLeft()
+      
     }  
 
   }
   hitRight(thing){
-    if(thing.pos.x+thing.w>=this.w){
+    if(thing.pos.x+thing.w>=this.w && thing.speed.x/thing.pos.x>0){
       thing.rightHit(this)
     }  
   }
@@ -143,6 +192,8 @@ class Space {
   
   endOfTime() {
     this.things.forEach(t => t.disappear())
+    this.intervals.forEach(i => clearInterval(i))
+    
   }
   checkForCollisions() {
     let colliders = this.things
@@ -175,23 +226,25 @@ class Space {
   //clearInterval(moveTime)
   thing.switch(oThing)
   oThing.switch(thing)
-  thing.hold()
-  oThing.hold()
+  thing.hold(oThing)
+  oThing.hold(thing)
   }
 }
 
 class Thing {
   constructor(props) {
+    this.name = props.name
     this.space = props.space
     this.id = props.id
     this.src = props.src
-    this.pos = {...props.start}
+    this.pos = {...props.pos}
     this.size = {...props.size}
     this.w = this.size.width / 2
     this.h = this.size.height / 2
     this.speed = {...props.speed}
     this.shootableThing = props.shootableThing || []
     this.classes = props.classes
+    this.immunity = []
     this.tempSpeed = {
      x:0,
      y:0,
@@ -202,8 +255,25 @@ class Thing {
   
   }
  
-  
-
+  addImmunity(oId){
+    this.immunity.push(oId)
+     let endImunnity = setTimeout(this.immunity.filter(d => d !== oId),200)
+  }
+  switch(oThing){
+    if (this.immunity.indexOf(oThing.id) < 0){
+      this.tempSpeed.x = oThing.speed.x
+      this.tempSpeed.y = oThing.speed.y
+      
+    }
+  }
+  hold(oThing){
+    if (this.immunity.indexOf(oThing.id) < 0){
+      this.speed.x=this.tempSpeed.x
+      this.speed.y = this.tempSpeed.y
+      this.addImmunity(oThing.id)
+      this.specialCollide(oThing)
+    }
+  }
   render() {
 
   }
@@ -226,51 +296,94 @@ class Thing {
 }
 
 class Politician extends Thing {
-  constructor(props) {
-    super(props)
-    this.heart = 1
-  }
-  switch(oThing){
-    this.tempSpeed.x = oThing.speed.x
-    this.tempSpeed.y = oThing.speed.y
-    this.specialCollide()
+  
+  
+}
+class Bullet extends Thing{
+  /*switch(){
+    //this is blank
   }
   hold(){
-    this.speed.x=this.tempSpeed.x
-    this.speed.y = this.tempSpeed.y
+    this.disappear()
+  }*/
+  hold(oThing){
+    if (this.immunity.indexOf(oThing.id) < 0){
+      this.el.destroy()
+      this.addImmunity(oThing.id)
+      this.specialCollide(oThing)
+    }
   }
-}
-  
-class Candidate extends Politician {
-  
-  constructor(props) {
-    super(props)
-    
+  specialCollide(oThing){
+
   }
   rightHit(space){
     this.changeSpeed({x:-this.speed.x,y:this.speed.y})
   }
-  shoot() {
-    this.space.newThing(this.shootableThing)
+  passLeft(){
+    this.pos.x = -(this.pos.x+10)
   }
-  specialCollide(){
-    console.log(1)
+  
+}
+class Candidate extends Politician {
+  
+  constructor(props) {
+    super(props)
+    this.bullet = props.bullet || null
+    if (this.bullet !== null) {
+    this.shots = setInterval( this.space.addBullet.bind(this.space),5000,this.bullet,this.pos)
+    this.space.intervals.push(this.shots)
+    }
+  }
+ 
+   
+
+  rightHit(space){
+    this.pos.x = -(this.pos.x+10)
+  }
+  passLeft(){
+    this.pos.x = -(this.pos.x+10)
+  }
+  
+  specialCollide(oThing){
+
   }
 }
+
 class Joe extends Politician{
   constructor(props) {
     super(props)
-    
   }
   rightHit(space){
-    this.pos.x = -space.w + 50
+    
+    makeLevel(space.level+1,space.hearts,space.totalScore())
     space.endOfTime()
+  }
+  passLeft(){
+    this.speed.x=0
+  }
+  specialCollide(oThing){
+    document.querySelector(`#heart${this.space.hearts}`).style.display="none"
+    this.space.hearts --
+    if(this.space.hearts == 0){
+      this.lose(oThing)
+    }
+  }
+  lose(oThing){
+    
+    //$$("#gameOver").set("text",`${oThing.name} made you drop out. \n Final Score: ${this.space.totalScore()} `)
+    let el = new Element('p',{
+      text:`${oThing.name} made you drop out. \n Final Score: ${this.space.totalScore()} `,
+      
 
-  }
-  specialCollide(){
-    document.querySelector(`#heart${this.heart}`).style.display="none"
-  }
-}
+    })
+    
+    el.inject(document.body)
+    el.style.position = "absolute"
+    el.style.left= this.space.w+"px"
+    el.style.top =this.space.h + "px"
+
+    this.space.endOfTime()
+  }}
 
 function getConfig(space) {
   //imgHeight = yScale(60)
@@ -282,55 +395,141 @@ function getConfig(space) {
   const player = {
     name: "Joe Biden",
     id: "joe",
-    start: { x: -space.w + imgWidth / 2, y: 0, },
+    pos: { x: -space.w + imgWidth / 2, y: 0, },
     src: "joeBiden.jpeg",
     size: { width: imgWidth, height: imgHeight},
     speed: {x: 0, y: 0},
-    classes: 'character',
+    classes:"thingy"
+ 
+  }
+  const bullets = {
+    kamalaBullet:{
+      
+      name:"a bus",
+      whose:"kamala",
+      src:"bus.jpeg",
+      classes:"thingy",
+      frequency:1000,
+      adjustSpeed:1000,
+      size: { width: imgWidth, height: imgHeight},
+    }
   }
   const candidates={
-  1:{
-    swallwell: {
-      name: "Eric Swallwell",
-      id:"swallwell",
-      src: "swallwell.jpeg",
-      level: 1,
-      start: { x:-3*space.w/5, y:50, },
-      size: { width: imgWidth, height: imgHeight},
-      speed: {x: 0, y: -1},
-      classes: 'character',
+    1:{
+      swallwell: {
+        name: "Eric Swallwell",
+        id:"swallwell",
+        src: "swallwell.jpeg",
+        level: 1,
+        pos: { x:-3*space.w/5, y:50, },
+        size: { width: imgWidth, height: imgHeight},
+        speed: {x: 0, y: -1},
+        classes: 'thingy',
+      },
+      hickenlooper: {
+        name: "John Hickenlooper",
+        id:"hickenlooper",
+        src: "hickenlooper.jpeg",
+        level: 1,
+        pos: { x:-space.w/5, y:0, },
+        size: { width: imgWidth, height: imgHeight},
+        speed: {x: 0, y: -2},
+        classes: 'thingy',
+      },
+      inslee: {
+        name: "Jay Inslee",
+        id:"inslee",
+        src: "inslee.jpg",
+        level: 1,
+        pos: { x:space.w/5, y:0, },
+        size: { width: imgWidth, height: imgHeight},
+        speed: {x: 0, y: -3},
+        classes: 'thingy',
+      },
+      gillibrand: {
+        name: "Kirsten Gillibrand",
+        id:"gillibrand",
+        src: "gillibrand.jpeg",
+        level: 1,
+        pos: { x:3*space.w/5, y:0, },
+        size: { width: imgWidth, height: imgHeight},
+        speed: {x: 0, y: -4},
+        classes: 'thingy',
+      },
     },
-    hickenlooper: {
-      name: "John Hickenlooper",
-      id:"hickenlooper",
-      src: "hickenlooper.jpeg",
-      level: 1,
-      start: { x:-space.w/5, y:0, },
-      size: { width: imgWidth, height: imgHeight},
-      speed: {x: 0, y: -2},
-      classes: 'character',
-    },
-    inslee: {
-      name: "Jay Inslee",
-      id:"inslee",
-      src: "inslee.jpg",
-      level: 1,
-      start: { x:space.w/5, y:0, },
-      size: { width: imgWidth, height: imgHeight},
-      speed: {x: 0, y: -3},
-      classes: 'character',
-    },
-    gillibrand: {
-      name: "Kirsten Gillibrand",
-      id:"gillibrand",
-      src: "gillibrand.jpeg",
-      level: 1,
+    2:{/*{
+    harris: {
+      name: "Kamala Harris",
+      id:"harris",
+      src: "kamala.jpg",
+      level: 2,
       start: { x:3*space.w/5, y:0, },
       size: { width: imgWidth, height: imgHeight},
       speed: {x: 0, y: -4},
       classes: 'character',
+  }*/
+    kamala: {
+      name: "Kamala Harris",
+      id:"kamala",
+      src: "kamala.jpg",
+      level: 1,
+      pos: { x:3*space.w/5, y:0, },
+      size: { width: imgWidth, height: imgHeight},
+      speed: {x: 0, y: -4},
+      classes: 'thingy',
+      bullet:bullets.kamalaBullet
+
+      }
+         
     },
-  },}
+    3:{
+      deBlasio: {
+      name: "Bill De Blasio",
+      id:"deblasio",
+      src: "deblasio.jpeg",
+      level: 3,
+      pos: { x:3*space.w/5, y:0, },
+      size: { width: imgWidth, height: imgHeight},
+      speed: {x: 5, y: -4},
+      classes: 'thingy',
+      bullet:null
+      },
+      bennet: {
+        name: "Michael Bennet",
+        id:"bennet",
+        src: "bennet.jpeg",
+        level: 3,
+        pos: { x:-3*space.w/5, y:0, },
+        size: { width: imgWidth, height: imgHeight},
+        speed: {x: 12, y: -5},
+        classes: 'thingy',
+        bullet:null
+        },
+        yang: {
+          name: "Andrew Yang",
+          id:"yang",
+          src: "yang.jpeg",
+          level: 3,
+          pos: { x:1*space.w/3, y:0, },
+          size: { width: imgWidth, height: imgHeight},
+          speed: {x: 12, y: 12},
+          classes: 'thingy',
+          bullet:null
+          },
+          bennet: {
+            name: "Michael Bennet",
+            id:"bennet",
+            src: "bennet.jpeg",
+            level: 3,
+            pos: { x:-3*space.w/5, y:0, },
+            size: { width: imgWidth, height: imgHeight},
+            speed: {x: 12, y: -5},
+            classes: 'thingy',
+            bullet:null
+            },
+    }
+  }
+  
   const directions = {
     "39": {x:  13, y:  0},
     "37": {x: -13, y:  0},
